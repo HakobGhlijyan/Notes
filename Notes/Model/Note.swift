@@ -6,26 +6,26 @@
 //
 
 import SwiftUI
+import SwiftData
 
-struct Note: Identifiable {
+@Model
+class Note: Identifiable {
     var id: String = UUID().uuidString
-    var color: Color
+    var dataCreated: Date = Date()
+    var colorString: String
+    var title: String
+    var content: String
+    
     //View Properties
     var allowwHitTesting: Bool = false
+    
+    var color: Color {
+        Color(colorString)
+    }
+    
+    init(colorString: String, title: String, content: String) {
+        self.colorString = colorString
+        self.title = title
+        self.content = content
+    }
 }
-
-var mockNotes: [Note] = [
-    .init(color: .red),
-    .init(color: .blue),
-    .init(color: .green),
-    .init(color: .yellow),
-    .init(color: .purple),
-    .init(color: .gray),
-    .init(color: .cyan),
-    .init(color: .brown),
-    .init(color: .green),
-    .init(color: .secondary),
-    .init(color: .teal),
-    .init(color: .blue),
-    .init(color: .orange),
-]

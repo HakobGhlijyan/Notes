@@ -6,12 +6,15 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct Home: View {
     @State private var searchText: String = ""
     @State private var selectedNote: Note?
     @State private var animateView: Bool = false
-    @State private var notes: [Note] = mockNotes
+    
+    @Query(sort: [.init(\Note.dataCreated, order: .reverse)], animation: .snappy) private var notes: [Note]
+    @Environment(\.modelContext) private var modelContext
     @Namespace private var animation
     
     var body: some View {
@@ -20,7 +23,7 @@ struct Home: View {
                 SearchBar()
                 
                 LazyVGrid(columns: Array(repeating: GridItem(), count: 2)) {
-                    ForEach($notes) { $note in
+                    ForEach(notes) { note in
                         CardView(note)
                             .frame(height: 150)
                             .onTapGesture {
@@ -81,7 +84,9 @@ struct Home: View {
     @ViewBuilder func BottomBar() -> some View {
         HStack(spacing: 15) {
             Button {
-                
+                if selectedNote == nil {
+                    createEmptyNote()
+                }
             } label: {
                 Image(systemName: selectedNote == nil ? "plus.circle.fill" : "trash.fill")
                     .font(.title2)
@@ -138,10 +143,39 @@ struct Home: View {
             }
         }
     }
+    
+    func createEmptyNote() {
+        let colors: [String] = (1...5).compactMap({ "Note \($0)" })
+        let randomColor = colors.randomElement()!
+        let note = Note(colorString: randomColor, title: "", content: "")
+        modelContext.insert(note)
+    }
+}
+
+@MainActor
+class DataController {
+    static let previewContainer: ModelContainer = {
+        do {
+            let config = ModelConfiguration(isStoredInMemoryOnly: true)
+            let container = try ModelContainer(for: Note.self, configurations: config)
+
+            let colors: [String] = (1...5).compactMap({ "Note \($0)" })
+            let randomColor = colors.randomElement()!
+            
+            let note = Note(colorString: randomColor, title: "", content: "")
+            container.mainContext.insert(note)
+
+            return container
+        } catch {
+            fatalError("Failed to create model container for previewing: \(error.localizedDescription)")
+        }
+    }()
 }
 
 #Preview {
     ContentView()
+        .modelContainer(DataController.previewContainer)
+    
 }
 
 struct DetalView: View {
