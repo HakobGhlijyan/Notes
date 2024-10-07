@@ -6,13 +6,28 @@
 //
 
 import SwiftUI
+import SwiftData
 
-struct SearchQueryView: View {
+struct SearchQueryView<Content: View>: View {
+    var content: ([Note]) -> Content
+    
+    @Query var notes: [Note]
+    
+    init(searchText: String, @ViewBuilder content: @escaping ([Note]) -> Content) {
+        self.content = content
+        
+        let isSearchTextEmpty = searchText.isEmpty
+        
+        let predicate = #Predicate<Note> {
+            return isSearchTextEmpty || $0.title.localizedStandardContains(searchText)
+            
+        }
+        
+        _notes = .init(filter: predicate, sort: [.init(\.dataCreated, order: .reverse)], animation: .snappy)
+    }
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        content(notes)
     }
 }
 
-#Preview {
-    SearchQueryView()
-}
